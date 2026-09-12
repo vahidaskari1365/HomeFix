@@ -115,3 +115,17 @@ Browser verification (Agent Browser, desktop 1280px + mobile 390px, light + dark
 
 Stage Summary:
 - App fully functional end-to-end; ready for git push
+---
+Task ID: 5
+Agent: coordinator
+Task: Git commit & push to GitHub
+
+Work Log:
+- Updated .gitignore (excluded db/*.db, scaffold dirs: .zscripts, download, examples, tests, mini-services, agent-ctx)
+- Wrote README.md (features, stack, demo walkthrough, API summary, roadmap)
+- Set git identity (vahidaskari1365), added origin with token auth
+- Committed 119 files as "HomeFix v1.0 — Iranian home-services marketplace"
+- Pushed main → https://github.com/vahidaskari1365/HomeFix.git (verified: fbbf31c on origin/main)
+
+Stage Summary:
+- Project delivered: fully working HomeFix platform, browser-verified, on GitHub
