@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ServiceCategory {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  tagline   String?
+  icon      String // lucide icon name
+  color     String? // hex accent
+  sortOrder Int       @default(0)
+  services  Service[]
+  createdAt DateTime  @default(now())
+}
+
+model Service {
+  id          String            @id @default(cuid())
+  categoryId  String
+  category    ServiceCategory   @relation(fields: [categoryId], references: [id])
+  name        String
+  description String?
+  basePrice   Int // toman
+  durationMin Int               @default(60)
+  isActive    Boolean           @default(true)
+  orders      Order[]
+  specialists SpecialistSkill[]
+}
+
+model Specialist {
+  id                String            @id @default(cuid())
+  firstName         String
+  lastName          String
+  phone             String            @unique
+  nationalId        String?
+  cardNumber        String?
+  avatarUrl         String?
+  city              String            @default("تهران")
+  area              String
+  bio               String?
+  experienceYears   Int               @default(0)
+  identityVerified  Boolean           @default(false)
+  skillsVerified    Boolean           @default(false)
+  interviewPassed   Boolean           @default(false)
+  status            String            @default("ACTIVE") // ACTIVE | PENDING | SUSPENDED
+  verificationLevel Int               @default(1) // 1..3
+  plan              String            @default("FREE") // FREE | PRO
+  isAvailable       Boolean           @default(true)
+  rating            Float             @default(0)
+  ratingCount       Int               @default(0)
+  totalOrders       Int               @default(0)
+  successfulOrders  Int               @default(0)
+  skills            SpecialistSkill[]
+  offers            OrderOffer[]
+  orders            Order[]
+  reviews           Review[]
+  createdAt         DateTime          @default(now())
+}
+
+model SpecialistSkill {
+  id           String     @id @default(cuid())
+  specialistId String
+  specialist   Specialist @relation(fields: [specialistId], references: [id])
+  serviceId    String
+  service      Service    @relation(fields: [serviceId], references: [id])
+  @@unique([specialistId, serviceId])
+}
+
+model Order {
+  id                String       @id @default(cuid())
+  code              String       @unique
+  status            String       @default("FINDING") // FINDING | OFFERED | ACCEPTED | ARRIVED | IN_PROGRESS | COMPLETED | PAID | CANCELED
+  serviceId         String
+  service           Service      @relation(fields: [serviceId], references: [id])
+  specialistId      String?
+  specialist        Specialist?  @relation(fields: [specialistId], references: [id])
+  customerName      String
+  customerPhone     String
+  city              String       @default("تهران")
+  address           String
+  scheduledDate     String // yyyy-mm-dd
+  scheduledSlot     String // "09:00-11:00" ...
+  description       String?
+  price             Int
+  commissionRate    Float        @default(0.15)
+  commissionAmount  Int          @default(0)
+  specialistEarning Int          @default(0)
+  entryCode         String?
+  paymentMethod     String?
+  acceptedAt        DateTime?
+  arrivedAt         DateTime?
+  workStartedAt     DateTime?
+  completedAt       DateTime?
+  paidAt            DateTime?
+  customerRated     Boolean      @default(false)
+  specialistRated   Boolean      @default(false)
+  offers            OrderOffer[]
+  events            OrderEvent[]
+  reviews           Review[]
+  createdAt         DateTime     @default(now())
+}
+
+model OrderOffer {
+  id           String     @id @default(cuid())
+  orderId      String
+  order        Order      @relation(fields: [orderId], references: [id])
+  specialistId String
+  specialist   Specialist @relation(fields: [specialistId], references: [id])
+  status       String     @default("PENDING") // PENDING | ACCEPTED | REJECTED
+  createdAt    DateTime   @default(now())
+  respondedAt  DateTime?
+}
+
+model OrderEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  type      String // STATUS | EMERGENCY | ENTRY | PAYMENT | NOTE
+  title     String
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id           String      @id @default(cuid())
+  orderId      String
+  order        Order       @relation(fields: [orderId], references: [id])
+  specialistId String?
+  specialist   Specialist? @relation(fields: [specialistId], references: [id])
+  by           String // CUSTOMER | SPECIALIST
+  rating       Int
+  comment      String?
+  createdAt    DateTime    @default(now())
+}
