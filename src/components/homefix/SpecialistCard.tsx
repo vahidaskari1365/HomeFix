@@ -17,7 +17,7 @@ export function SpecialistCard({ specialist }: { specialist: SpecialistPublicDTO
     <div className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
       <div className="flex flex-wrap items-start gap-4">
         {/* avatar */}
-        <span className="grid size-16 shrink-0 place-items-center rounded-full bg-gradient-to-bl from-emerald-500 to-teal-700 text-xl font-extrabold text-white shadow-md">
+        <span className="arch-well grid size-16 shrink-0 place-items-center bg-gradient-to-b from-primary to-primary/75 text-xl font-extrabold text-primary-foreground shadow-glow-teal">
           {initialsAvatar(`${sp.firstName} ${sp.lastName}`)}
         </span>
 

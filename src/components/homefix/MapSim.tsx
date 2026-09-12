@@ -24,18 +24,18 @@ export function MapSim() {
   }, []);
 
   return (
-    <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <div className="relative h-44 bg-gradient-to-b from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30">
+    <div className="overflow-hidden rounded-2xl border bg-card shadow-warm-sm">
+      <div className="relative h-44 bg-gradient-to-b from-secondary/60 to-muted dark:from-secondary/40 dark:to-muted">
         <svg viewBox="0 0 300 160" className="h-full w-full" aria-label="نقشه شبیه‌سازی‌شده مسیر متخصص">
           {/* streets */}
-          <path d="M0 40 H300" stroke="currentColor" strokeWidth="14" className="text-emerald-100 dark:text-emerald-900/60" />
-          <path d="M0 110 H300" stroke="currentColor" strokeWidth="14" className="text-emerald-100 dark:text-emerald-900/60" />
-          <path d="M70 0 V160" stroke="currentColor" strokeWidth="14" className="text-emerald-100 dark:text-emerald-900/60" />
-          <path d="M215 0 V160" stroke="currentColor" strokeWidth="14" className="text-emerald-100 dark:text-emerald-900/60" />
+          <path d="M0 40 H300" stroke="currentColor" strokeWidth="14" className="text-card dark:text-card" />
+          <path d="M0 110 H300" stroke="currentColor" strokeWidth="14" className="text-card dark:text-card" />
+          <path d="M70 0 V160" stroke="currentColor" strokeWidth="14" className="text-card dark:text-card" />
+          <path d="M215 0 V160" stroke="currentColor" strokeWidth="14" className="text-card dark:text-card" />
           {/* blocks */}
-          <rect x="90" y="55" width="40" height="38" rx="6" className="fill-emerald-200/70 dark:fill-emerald-900/70" />
-          <rect x="150" y="55" width="45" height="38" rx="6" className="fill-emerald-200/70 dark:fill-emerald-900/70" />
-          <rect x="18" y="55" width="36" height="38" rx="6" className="fill-emerald-200/70 dark:fill-emerald-900/70" />
+          <rect x="90" y="55" width="40" height="38" rx="6" className="fill-brass/15" />
+          <rect x="150" y="55" width="45" height="38" rx="6" className="fill-brass/15" />
+          <rect x="18" y="55" width="36" height="38" rx="6" className="fill-brass/15" />
           {/* route */}
           <motion.path
             d="M30 128 H70 V40 H215 V64 H240"

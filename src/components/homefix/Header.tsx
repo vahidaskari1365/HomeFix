@@ -1,11 +1,12 @@
 "use client";
 
 // ============================================================
-// HomeFix — sticky header (desktop nav + mobile sheet)
+// HomeFix — sticky header (scroll progress + custom logo mark)
 // ============================================================
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { motion, useScroll, useSpring } from "framer-motion";
 import {
   CalendarPlus,
   Menu,
@@ -46,6 +47,23 @@ function ThemeToggle({ className }: { className?: string }) {
   );
 }
 
+/** Custom logo mark: wrench inside a Persian-arch badge */
+function LogoMark({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-primary text-primary-foreground shadow-glow-teal",
+        className
+      )}
+      aria-hidden
+    >
+      <span className="pattern-khatam-light absolute inset-0 opacity-60" />
+      <Wrench className="relative size-5" />
+      <span className="absolute -bottom-1.5 -left-1.5 size-4 rounded-full bg-brass ring-2 ring-card" />
+    </span>
+  );
+}
+
 export function Header() {
   const view = useHomeFix((s) => s.view);
   const goHome = useHomeFix((s) => s.goHome);
@@ -53,6 +71,17 @@ export function Header() {
   const openMyOrders = useHomeFix((s) => s.openMyOrders);
   const openSpecialistLogin = useHomeFix((s) => s.openSpecialistLogin);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 26, mass: 0.4 });
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const navItems = [
     { label: "ثبت درخواست", icon: CalendarPlus, active: view === "booking", onClick: () => openBooking() },
@@ -66,7 +95,19 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/80 backdrop-blur-md">
+    <header
+      className={cn(
+        "sticky top-0 z-40 w-full transition-shadow duration-300",
+        scrolled ? "glass shadow-warm-sm" : "bg-transparent"
+      )}
+    >
+      {/* brass scroll progress hairline */}
+      <motion.span
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-0.5 origin-right bg-gradient-to-l from-brass to-brass-deep"
+        style={{ scaleX: progress }}
+      />
+
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
         {/* logo */}
         <button
@@ -75,14 +116,14 @@ export function Header() {
           className="flex min-h-11 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="HomeFix — صفحه اصلی"
         >
-          <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <Wrench className="size-5" />
-          </span>
-          <span dir="ltr" className="text-lg font-extrabold tracking-tight">
-            HomeFix
-          </span>
-          <span className="hidden rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-semibold text-secondary-foreground sm:inline-block">
-            متخصص خانگی
+          <LogoMark />
+          <span className="leading-none">
+            <span dir="ltr" className="block text-lg font-black tracking-tight">
+              HomeFix
+            </span>
+            <span className="mt-0.5 hidden text-[10px] font-semibold text-muted-foreground sm:block">
+              متخصص خانگی، با خیال راحت
+            </span>
           </span>
         </button>
 
@@ -95,23 +136,39 @@ export function Header() {
               onClick={item.onClick}
               aria-current={item.active ? "page" : undefined}
               className={cn(
-                "inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                item.active ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
+                "relative inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                item.active
+                  ? "bg-secondary text-secondary-foreground"
+                  : "hover:bg-muted"
               )}
             >
               <item.icon className="size-4" />
               {item.label}
+              {item.active ? (
+                <motion.span
+                  layoutId="nav-underline"
+                  className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-brass"
+                />
+              ) : null}
             </button>
           ))}
 
           <a
             href="tel:02191007800"
-            className="ms-2 inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-3.5 text-sm font-bold shadow-sm transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring outline-none"
+            className="ms-2 inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-3.5 text-sm font-bold shadow-warm-sm transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring outline-none"
             aria-label={`تماس با پشتیبانی ${SUPPORT_PHONE}`}
           >
             <Phone className="size-4 text-primary" />
             <span dir="ltr">{SUPPORT_PHONE}</span>
           </a>
+
+          <Button
+            className="ms-1 min-h-11 gap-2 bg-accent px-4 text-accent-foreground shadow-glow-brass hover:bg-accent/90"
+            onClick={() => openBooking()}
+          >
+            <CalendarPlus className="size-4" />
+            درخواست سرویس
+          </Button>
 
           <ThemeToggle className="ms-1" />
         </nav>
@@ -128,9 +185,7 @@ export function Header() {
             <SheetContent side="right" className="w-72">
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
-                  <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-                    <Wrench className="size-4" />
-                  </span>
+                  <LogoMark className="size-8" />
                   <span dir="ltr">HomeFix</span>
                 </SheetTitle>
               </SheetHeader>
@@ -152,9 +207,19 @@ export function Header() {
                     {item.label}
                   </button>
                 ))}
+                <Button
+                  className="mt-2 min-h-11 bg-accent text-accent-foreground hover:bg-accent/90"
+                  onClick={() => {
+                    openBooking();
+                    setMenuOpen(false);
+                  }}
+                >
+                  <CalendarPlus className="size-4" />
+                  درخواست سرویس
+                </Button>
                 <a
                   href="tel:02191007800"
-                  className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 text-sm font-bold"
+                  className="mt-1 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 text-sm font-bold"
                 >
                   <Phone className="size-4 text-primary" />
                   پشتیبانی: <span dir="ltr">{SUPPORT_PHONE}</span>

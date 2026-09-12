@@ -1,0 +1,679 @@
+     1→"use client";
+     2→
+     3→// ============================================================
+     4→// HomeFix — Home view (hero, stats, AI assistant, catalog,
+     5→// how-it-works, trust, plans, specialist CTA, top specialists)
+     6→// ============================================================
+     7→
+     8→import { useState } from "react";
+     9→import { useMutation, useQuery } from "@tanstack/react-query";
+    10→import { motion } from "framer-motion";
+    11→import {
+    12→  AirVent,
+    13→  ArrowLeft,
+    14→  BadgeCheck,
+    15→  CalendarPlus,
+    16→  Check,
+    17→  ClipboardCheck,
+    18→  Droplets,
+    19→  KeyRound,
+    20→  MapPin,
+    21→  Percent,
+    22→  Quote,
+    23→  Radar,
+    24→  ShieldCheck,
+    25→  Siren,
+    26→  Sparkles,
+    27→  Star,
+    28→  UserCheck,
+    29→  UserRoundPlus,
+    30→  Wallet,
+    31→  Wrench,
+    32→  Zap,
+    33→} from "lucide-react";
+    34→import { Button } from "@/components/ui/button";
+    35→import { Textarea } from "@/components/ui/textarea";
+    36→import { apiGet, apiPost } from "./api";
+    37→import { categoryColorStyle, categoryIcon } from "./icons";
+    38→import {
+    39→  ErrorState,
+    40→  LevelBadge,
+    41→  SectionHeading,
+    42→  StarRating,
+    43→  SpinnerRow,
+    44→  staggerContainer,
+    45→  staggerItem,
+    46→} from "./bits";
+    47→import { useHomeFix } from "@/lib/store";
+    48→import { formatToman, initialsAvatar, toFa } from "@/lib/format";
+    49→import type { AiSuggestionDTO, CategoryDTO, StatsDTO } from "@/lib/types";
+    50→
+    51→const CONTAINER = "mx-auto max-w-6xl px-4";
+    52→const CARD = "rounded-2xl border bg-card shadow-sm";
+    53→
+    54→// ============================================================
+    55→// Hero
+    56→// ============================================================
+    57→function Hero() {
+    58→  const openBooking = useHomeFix((s) => s.openBooking);
+    59→  const openSpecialistLogin = useHomeFix((s) => s.openSpecialistLogin);
+    60→
+    61→  const bubbles = [
+    62→    { Icon: AirVent, className: "top-8 right-8", delay: 0 },
+    63→    { Icon: Droplets, className: "top-24 left-10", delay: 0.7 },
+    64→    { Icon: Zap, className: "bottom-24 right-16", delay: 1.2 },
+    65→    { Icon: Sparkles, className: "bottom-10 left-16", delay: 0.4 },
+    66→  ];
+    67→
+    68→  const trustChips = [
+    69→    { Icon: ShieldCheck, label: "پرداخت امن" },
+    70→    { Icon: BadgeCheck, label: "ضمانت کیفیت" },
+    71→    { Icon: KeyRound, label: "کد ورود امن" },
+    72→  ];
+    73→
+    74→  return (
+    75→    <section aria-label="معرفی HomeFix" className="relative overflow-hidden">
+    76→      <div className={`${CONTAINER} grid items-center gap-10 pt-12 pb-8 md:grid-cols-2 md:pt-20 md:pb-12`}>
+    77→        {/* copy */}
+    78→        <motion.div
+    79→          initial={{ opacity: 0, y: 18 }}
+    80→          animate={{ opacity: 1, y: 0 }}
+    81→          transition={{ duration: 0.5, ease: "easeOut" }}
+    82→          className="space-y-6"
+    83→        >
+    84→          <h1 className="text-3xl leading-[1.25] font-extrabold md:text-5xl md:leading-[1.2]">
+    85→            متخصص خانگی،{" "}
+    86→            <span className="bg-gradient-to-l from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+    87→              به سادگیِ یک انتخاب
+    88→            </span>
+    89→          </h1>
+    90→          <p className="max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
+    91→            از کولر تا لوله‌کشی — انتخاب کن، متخصص مناسب می‌رسد، با خیال راحت پرداخت کن.
+    92→          </p>
+    93→          <div className="flex flex-wrap items-center gap-3">
+    94→            <Button size="lg" className="min-h-11 px-6 text-base" onClick={() => openBooking()}>
+    95→              <CalendarPlus className="size-5" />
+    96→              ثبت درخواست
+    97→            </Button>
+    98→            <Button
+    99→              size="lg"
+   100→              variant="outline"
+   101→              className="min-h-11 px-6 text-base"
+   102→              onClick={() => openSpecialistLogin("register")}
+   103→            >
+   104→              <UserRoundPlus className="size-5" />
+   105→              عضویت به‌عنوان متخصص
+   106→            </Button>
+   107→          </div>
+   108→          <div className="flex flex-wrap items-center gap-2 pt-1">
+   109→            {trustChips.map((c) => (
+   110→              <span
+   111→                key={c.label}
+   112→                className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+   113→              >
+   114→                <c.Icon className="size-3.5 text-primary" />
+   115→                {c.label}
+   116→              </span>
+   117→            ))}
+   118→          </div>
+   119→        </motion.div>
+   120→
+   121→        {/* visual */}
+   122→        <motion.div
+   123→          initial={{ opacity: 0, scale: 0.96 }}
+   124→          animate={{ opacity: 1, scale: 1 }}
+   125→          transition={{ duration: 0.55, delay: 0.15, ease: "easeOut" }}
+   126→          className="relative"
+   127→        >
+   128→          <div className="relative h-72 overflow-hidden rounded-3xl bg-gradient-to-bl from-emerald-500 via-teal-600 to-emerald-800 shadow-xl md:h-80">
+   129→            <div className="absolute -top-10 -left-10 size-40 rounded-full bg-white/10 blur-2xl" aria-hidden />
+   130→            <div className="absolute -right-12 bottom-0 size-52 rounded-full bg-amber-400/20 blur-3xl" aria-hidden />
+   131→
+   132→            {/* floating icon bubbles */}
+   133→            {bubbles.map((b, i) => (
+   134→              <motion.span
+   135→                key={i}
+   136→                className={`absolute grid size-14 place-items-center rounded-2xl bg-white/15 text-white shadow-lg backdrop-blur-sm ${b.className}`}
+   137→                animate={{ y: [0, -10, 0] }}
+   138→                transition={{ duration: 3.2, repeat: Infinity, delay: b.delay, ease: "easeInOut" }}
+   139→                aria-hidden
+   140→              >
+   141→                <b.Icon className="size-7" />
+   142→              </motion.span>
+   143→            ))}
+   144→
+   145→            {/* glass status card */}
+   146→            <motion.div
+   147→              className="absolute bottom-5 right-5 left-5 rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur dark:bg-white/10"
+   148→              animate={{ y: [0, -6, 0] }}
+   149→              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+   150→            >
+   151→              <div className="flex items-center justify-between gap-3">
+   152→                <div className="flex items-center gap-3">
+   153→                  <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+   154→                    <AirVent className="size-5" />
+   155→                  </span>
+   156→                  <div>
+   157→                    <p className="text-sm font-bold">سرویس و شارژ کولر گازی</p>
+   158→                    <p className="text-xs text-muted-foreground">امروز، ۹ تا ۱۱ صبح</p>
+   159→                  </div>
+   160→                </div>
+   161→                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">
+   162→                  <ShieldCheck className="size-3.5" />
+   163→                  متخصص تأیید شد
+   164→                </span>
+   165→              </div>
+   166→              <div className="mt-3 flex items-center gap-1 border-t pt-3">
+   167→                <Star className="size-4 fill-amber-400 text-amber-400" />
+   168→                <span className="text-xs font-bold">۴٫۹</span>
+   169→                <span className="text-xs text-muted-foreground">— از ۳۲۶ سفارش موفق</span>
+   170→              </div>
+   171→            </motion.div>
+   172→          </div>
+   173→        </motion.div>
+   174→      </div>
+   175→    </section>
+   176→  );
+   177→}
+   178→
+   179→// ============================================================
+   180→// Stats strip — GET /api/stats
+   181→// ============================================================
+   182→function StatsStrip() {
+   183→  const { data, isLoading, isError, refetch } = useQuery({
+   184→    queryKey: ["stats"],
+   185→    queryFn: () => apiGet<{ stats: StatsDTO }>("/api/stats"),
+   186→    retry: 1,
+   187→  });
+   188→
+   189→  const stats = data?.stats;
+   190→  const items = [
+   191→    { label: "متخصص فعال", value: stats ? toFa(stats.specialistsCount) : "—" },
+   192→    { label: "سفارش موفق", value: stats ? toFa(stats.ordersCount) : "—" },
+   193→    { label: "میانگین امتیاز", value: stats ? `${toFa(stats.avgRating.toFixed(1))} ★` : "—" },
+   194→    { label: "دسته خدمات", value: toFa(8) },
+   195→  ];
+   196→
+   197→  return (
+   198→    <section aria-label="آمار پلتفرم" className={`${CONTAINER} py-6 md:py-8`}>
+   199→      {isError ? (
+   200→        <ErrorState message="خطا در دریافت آمار" onRetry={() => refetch()} />
+   201→      ) : (
+   202→        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+   203→          {items.map((item) => (
+   204→            <div key={item.label} className={`${CARD} p-5 text-center`}>
+   205→              {isLoading ? (
+   206→                <div className="mx-auto mb-2 h-7 w-14 animate-pulse rounded bg-muted" />
+   207→              ) : (
+   208→                <p className="text-2xl font-extrabold text-primary">{item.value}</p>
+   209→              )}
+   210→              <p className="mt-1 text-xs font-medium text-muted-foreground md:text-sm">{item.label}</p>
+   211→            </div>
+   212→          ))}
+   213→        </div>
+   214→      )}
+   215→    </section>
+   216→  );
+   217→}
+   218→
+   219→// ============================================================
+   220→// AI assistant — POST /api/ai/suggest
+   221→// ============================================================
+   222→function AiAssistant() {
+   223→  const openBooking = useHomeFix((s) => s.openBooking);
+   224→  const [text, setText] = useState("");
+   225→
+   226→  const suggest = useMutation({
+   227→    mutationFn: (t: string) =>
+   228→      apiPost<{ suggestion: AiSuggestionDTO | null }>("/api/ai/suggest", { text: t }),
+   229→  });
+   230→
+   231→  const suggestion = suggest.data?.suggestion ?? null;
+   232→
+   233→  return (
+   234→    <section aria-label="دستیار هوشمند" className={`${CONTAINER} py-8`}>
+   235→      <div className={`${CARD} mx-auto max-w-3xl p-6 md:p-8`}>
+   236→        <div className="mb-4 flex items-center gap-3">
+   237→          <span className="grid size-11 place-items-center rounded-xl bg-accent/15 text-accent-foreground">
+   238→            <Sparkles className="size-5" />
+   239→          </span>
+   240→          <div>
+   241→            <h2 className="font-extrabold">نمی‌دانی چه سرویسی لازم داری؟</h2>
+   242→            <p className="text-xs text-muted-foreground">مشکل را بنویس، دستیار هوشمند پیشنهاد می‌دهد</p>
+   243→          </div>
+   244→        </div>
+   245→
+   246→        <Textarea
+   247→          value={text}
+   248→          onChange={(e) => setText(e.target.value)}
+   249→          placeholder="مثلاً: کولرم روشن می‌شه ولی خنک نمی‌کنه…"
+   250→          rows={3}
+   251→          className="resize-none"
+   252→          aria-label="توصیف مشکل"
+   253→        />
+   254→
+   255→        <div className="mt-4 flex flex-wrap items-center gap-3">
+   256→          <Button
+   257→            className="min-h-11 bg-accent text-accent-foreground hover:bg-accent/90"
+   258→            disabled={suggest.isPending || text.trim().length < 3}
+   259→            onClick={() => suggest.mutate(text.trim())}
+   260→          >
+   261→            <Sparkles className="size-4" />
+   262→            {suggest.isPending ? "در حال فکر کردن…" : "دستیار هوشمند HomeFix"}
+   263→          </Button>
+   264→          {suggest.isError ? (
+   265→            <p className="text-sm text-muted-foreground">
+   266→              الان نمی‌تونم پیشنهاد بدم؛ از دسته‌بندی‌ها انتخاب کن
+   267→            </p>
+   268→          ) : null}
+   269→        </div>
+   270→
+   271→        {suggestion ? (
+   272→          <motion.div
+   273→            initial={{ opacity: 0, y: 10 }}
+   274→            animate={{ opacity: 1, y: 0 }}
+   275→            className="mt-5 rounded-xl border border-accent/50 bg-accent/10 p-4"
+   276→          >
+   277→            <p className="text-sm leading-relaxed">
+   278→              <span className="font-extrabold">پیشنهاد ما: {suggestion.serviceName}</span>
+   279→              <span className="text-muted-foreground"> — {suggestion.reason}</span>
+   280→            </p>
+   281→            <Button
+   282→              className="mt-3 min-h-11"
+   283→              onClick={() => openBooking({ serviceId: suggestion.serviceId, aiText: text.trim() })}
+   284→            >
+   285→              شروع درخواست با این سرویس
+   286→              <ArrowLeft className="size-4" />
+   287→            </Button>
+   288→          </motion.div>
+   289→        ) : null}
+   290→      </div>
+   291→    </section>
+   292→  );
+   293→}
+   294→
+   295→// ============================================================
+   296→// Catalog grid — GET /api/catalog
+   297→// ============================================================
+   298→function CatalogGrid() {
+   299→  const openBooking = useHomeFix((s) => s.openBooking);
+   300→  const { data, isLoading, isError, refetch } = useQuery({
+   301→    queryKey: ["catalog"],
+   302→    queryFn: () => apiGet<{ categories: CategoryDTO[] }>("/api/catalog"),
+   303→    retry: 1,
+   304→  });
+   305→
+   306→  return (
+   307→    <section id="catalog" aria-label="دسته‌بندی خدمات" className={`${CONTAINER} py-12 md:py-16`}>
+   308→      <SectionHeading
+   309→        eyebrow="خدمات"
+   310→        title="چه کاری لازم داری؟"
+   311→        sub="دسته را انتخاب کن؛ متخصص‌های همان حوزه برایت پیشنهاد می‌شوند."
+   312→      />
+   313→      {isLoading ? (
+   314→        <SpinnerRow label="در حال بارگذاری خدمات…" />
+   315→      ) : isError ? (
+   316→        <ErrorState onRetry={() => refetch()} />
+   317→      ) : (
+   318→        <motion.div
+   319→          variants={staggerContainer}
+   320→          initial="hidden"
+   321→          whileInView="show"
+   322→          viewport={{ once: true, margin: "-40px" }}
+   323→          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+   324→        >
+   325→          {(data?.categories ?? []).map((cat) => {
+   326→            const Icon = categoryIcon(cat.icon);
+   327→            const colorStyle = categoryColorStyle(cat.color);
+   328→            return (
+   329→              <motion.button
+   330→                key={cat.id}
+   331→                type="button"
+   332→                variants={staggerItem}
+   333→                onClick={() => openBooking({ categoryId: cat.id })}
+   334→                className={`${CARD} group flex min-h-44 cursor-pointer flex-col items-start p-5 text-right transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring outline-none`}
+   335→                aria-label={`${cat.name} — ${toFa(cat.services.length)} خدمات`}
+   336→              >
+   337→                <span
+   338→                  className="mb-4 grid size-12 place-items-center rounded-xl"
+   339→                  style={colorStyle}
+   340→                >
+   341→                  <Icon className="size-6" />
+   342→                </span>
+   343→                <span className="font-extrabold">{cat.name}</span>
+   344→                <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+   345→                  {cat.tagline}
+   346→                </span>
+   347→                <span className="mt-auto flex w-full items-center justify-between pt-4 text-xs font-bold">
+   348→                  <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
+   349→                    {toFa(cat.services.length)} خدمات
+   350→                  </span>
+   351→                  <ArrowLeft className="size-4 text-muted-foreground transition-transform group-hover:-translate-x-1" />
+   352→                </span>
+   353→              </motion.button>
+   354→            );
+   355→          })}
+   356→        </motion.div>
+   357→      )}
+   358→    </section>
+   359→  );
+   360→}
+   361→
+   362→// ============================================================
+   363→// How it works — 9 steps
+   364→// ============================================================
+   365→const HOW_STEPS = [
+   366→  { icon: ClipboardCheck, title: "ثبت درخواست", desc: "سرویس، زمان و آدرس را در چند ثانیه انتخاب می‌کنی." },
+   367→  { icon: Sparkles, title: "انتخاب متخصص", desc: "سیستم، متخصصِ مناسبِ منطقه و تخصص را پیدا می‌کند." },
+   368→  { icon: Check, title: "پذیرش سفارش", desc: "متخصص سفارش را می‌پذیرد و کد ورود ساخته می‌شود." },
+   369→  { icon: UserCheck, title: "مشاهده پروفایل", desc: "امتیاز، سطح تأیید و سابقه متخصص را می‌بینی." },
+   370→  { icon: MapPin, title: "حرکت به آدرس", desc: "متخصص در مسیر است؛ ردیابی زنده سفارش فعال می‌شود." },
+   371→  { icon: Wrench, title: "انجام کار", desc: "کار با ابزار کامل انجام و ورود/خروج ثبت می‌شود." },
+   372→  { icon: Wallet, title: "پرداخت درون‌برنامه‌ای", desc: "فقط بعد از انجام کار، داخل اپ پرداخت می‌کنی." },
+   373→  { icon: Star, title: "امتیاز دوطرفه", desc: "هم تو به متخصص امتیاز می‌دهی، هم او به تو." },
+   374→  { icon: Percent, title: "کمیسیون پلتفرم", desc: "پلتفرم فقط درصد کمی از هر کار موفق برمی‌دارد." },
+   375→];
+   376→
+   377→function HowItWorks() {
+   378→  return (
+   379→    <section id="how" aria-label="نحوه کار" className="bg-muted/40">
+   380→      <div className={`${CONTAINER} py-12 md:py-16`}>
+   381→        <SectionHeading
+   382→          eyebrow="فرآیند"
+   383→          title="از درخواست تا پرداخت، ۹ قدم"
+   384→          sub="کل مسیر شفاف است؛ هر لحظه می‌دانی سفارش کجاست."
+   385→        />
+   386→        <motion.div
+   387→          variants={staggerContainer}
+   388→          initial="hidden"
+   389→          whileInView="show"
+   390→          viewport={{ once: true, margin: "-40px" }}
+   391→          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+   392→        >
+   393→          {HOW_STEPS.map((step, i) => (
+   394→            <motion.div
+   395→              key={step.title}
+   396→              variants={staggerItem}
+   397→              className={`${CARD} relative p-5`}
+   398→            >
+   399→              <span className="absolute top-4 left-4 text-3xl font-black text-primary/10" aria-hidden>
+   400→                {toFa(i + 1)}
+   401→              </span>
+   402→              <div className="mb-3 flex items-center gap-3">
+   403→                <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+   404→                  <step.icon className="size-5" />
+   405→                </span>
+   406→                <span className="grid size-6 place-items-center rounded-full bg-primary text-[11px] font-extrabold text-primary-foreground">
+   407→                  {toFa(i + 1)}
+   408→                </span>
+   409→              </div>
+   410→              <p className="font-bold">{step.title}</p>
+   411→              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
+   412→            </motion.div>
+   413→          ))}
+   414→        </motion.div>
+   415→      </div>
+   416→    </section>
+   417→  );
+   418→}
+   419→
+   420→// ============================================================
+   421→// Trust section
+   422→// ============================================================
+   423→function TrustSection() {
+   424→  return (
+   425→    <section id="trust" aria-label="امنیت و اعتماد" className={`${CONTAINER} py-12 md:py-16`}>
+   426→      <SectionHeading
+   427→        eyebrow="امنیت"
+   428→        title="خیالت راحت باشد"
+   429→        sub="از لحظه ثبت سفارش تا پرداخت، همه‌چیز امن و قابل ردیابی است."
+   430→      />
+   431→      <motion.div
+   432→        variants={staggerContainer}
+   433→        initial="hidden"
+   434→        whileInView="show"
+   435→        viewport={{ once: true, margin: "-40px" }}
+   436→        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+   437→      >
+   438→        <motion.div variants={staggerItem} className={`${CARD} p-5`}>
+   439→          <span className="mb-3 grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
+   440→            <KeyRound className="size-5" />
+   441→          </span>
+   442→          <p className="font-bold">کد ورود یک‌بارمصرف</p>
+   443→          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+   444→            متخصص فقط با کد ۴ رقمی که خودت به او می‌گویی وارد می‌شود؛ زمان ورود دقیق ثبت می‌شود.
+   445→          </p>
+   446→        </motion.div>
+   447→
+   448→        <motion.div variants={staggerItem} className={`${CARD} p-5`}>
+   449→          <span className="mb-3 grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
+   450→            <ShieldCheck className="size-5" />
+   451→          </span>
+   452→          <p className="font-bold">سطوح احراز هویت متخصص‌ها</p>
+   453→          <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+   454→            <li className="flex items-center gap-2">
+   455→              <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
+   456→              سطح ۱ — هویت
+   457→            </li>
+   458→            <li className="flex items-center gap-2">
+   459→              <span className="size-2 rounded-full bg-blue-500" aria-hidden />
+   460→              سطح ۲ — هویت + مهارت
+   461→            </li>
+   462→            <li className="flex items-center gap-2">
+   463→              <span className="size-2 rounded-full bg-purple-500" aria-hidden />
+   464→              سطح ۳ — + عملکرد عالی
+   465→            </li>
+   466→          </ul>
+   467→        </motion.div>
+   468→
+   469→        <motion.div variants={staggerItem} className={`${CARD} p-5`}>
+   470→          <span className="mb-3 grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
+   471→            <Radar className="size-5" />
+   472→          </span>
+   473→          <p className="font-bold">ردیابی زنده سفارش</p>
+   474→          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+   475→            مسیر متخصص را تا لحظه رسیدن می‌بینی؛ ردیابی فقط در بازه همین سفارش فعال است.
+   476→          </p>
+   477→        </motion.div>
+   478→
+   479→        <motion.div variants={staggerItem} className={`${CARD} p-5`}>
+   480→          <span className="mb-3 grid size-11 place-items-center rounded-xl bg-destructive/10 text-destructive">
+   481→            <Siren className="size-5" />
+   482→          </span>
+   483→          <p className="font-bold">دکمه اضطراری</p>
+   484→          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+   485→            در هر لحظه از سفارش، یک دکمه مستقیم به تیم پشتیبانی و گزارش فوری داری.
+   486→          </p>
+   487→        </motion.div>
+   488→
+   489→        <motion.div variants={staggerItem} className={`${CARD} p-5`}>
+   490→          <span className="mb-3 grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
+   491→            <BadgeCheck className="size-5" />
+   492→          </span>
+   493→          <p className="font-bold">بررسی‌شده بودن متخصص‌ها</p>
+   494→          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+   495→            همه متخصص‌ها مدارک، مهارت و مصاحبه را می‌گذرانند و بعد فعال می‌شوند.
+   496→          </p>
+   497→        </motion.div>
+   498→      </motion.div>
+   499→    </section>
+   500→  );
+   501→}
+   502→
+   503→// ============================================================
+   504→// Plans
+   505→// ============================================================
+   506→function PlansSection() {
+   507→  const openSpecialistLogin = useHomeFix((s) => s.openSpecialistLogin);
+   508→
+   509→  const freeFeatures = ["ثبت‌نام رایگان", "کمیسیون ۱۵٪", "۱۰ سفارش اول فقط ۱۰٪"];
+   510→  const proFeatures = ["کمیسیون ۸٪", "اولویت در نمایش", "پشتیبانی ویژه", "نشان حرفه‌ای در پروفایل"];
+   511→
+   512→  return (
+   513→    <section id="plans" aria-label="پلن‌های متخصص" className="bg-muted/40">
+   514→      <div className={`${CONTAINER} py-12 md:py-16`}>
+   515→        <SectionHeading
+   516→          center
+   517→          eyebrow="برای متخصص‌ها"
+   518→          title="پلن خودت را انتخاب کن"
+   519→          sub="شروع رایگان است؛ هر وقت خواستی ارتقا بده."
+   520→        />
+   521→        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+   522→          {/* FREE */}
+   523→          <div className={`${CARD} flex flex-col p-6`}>
+   524→            <p className="text-lg font-extrabold">پلن رایگان</p>
+   525→            <p className="mt-1 text-sm text-muted-foreground">برای شروع کار بدون هزینه اولیه</p>
+   526→            <p className="mt-4 text-2xl font-black text-primary">۰ تومان<span className="text-sm font-medium text-muted-foreground"> /ماه</span></p>
+   527→            <ul className="mt-5 flex-1 space-y-2.5">
+   528→              {freeFeatures.map((f) => (
+   529→                <li key={f} className="flex items-center gap-2 text-sm">
+   530→                  <Check className="size-4 text-primary" />
+   531→                  {f}
+   532→                </li>
+   533→              ))}
+   534→            </ul>
+   535→            <Button variant="outline" className="mt-6 min-h-11" onClick={() => openSpecialistLogin("register")}>
+   536→              شروع رایگان
+   537→            </Button>
+   538→          </div>
+   539→
+   540→          {/* PRO */}
+   541→          <div className="relative flex flex-col rounded-2xl border-2 border-accent bg-card p-6 shadow-md">
+   542→            <span className="absolute -top-3 right-6 rounded-full bg-accent px-3 py-1 text-[11px] font-extrabold text-accent-foreground shadow">
+   543→              بهترین انتخاب
+   544→            </span>
+   545→            <p className="text-lg font-extrabold">پلن حرفه‌ای</p>
+   546→            <p className="mt-1 text-sm text-muted-foreground">برای متخصص‌های جدی و پرکار</p>
+   547→            <p className="mt-4 text-2xl font-black text-primary">
+   548→              {formatToman(199000)}
+   549→              <span className="text-sm font-medium text-muted-foreground"> /ماه</span>
+   550→            </p>
+   551→            <ul className="mt-5 flex-1 space-y-2.5">
+   552→              {proFeatures.map((f) => (
+   553→                <li key={f} className="flex items-center gap-2 text-sm">
+   554→                  <Check className="size-4 text-accent-foreground" />
+   555→                  {f}
+   556→                </li>
+   557→              ))}
+   558→            </ul>
+   559→            <Button
+   560→              className="mt-6 min-h-11 bg-accent text-accent-foreground hover:bg-accent/90"
+   561→              onClick={() => openSpecialistLogin("register")}
+   562→            >
+   563→              ارتقا و شروع
+   564→            </Button>
+   565→          </div>
+   566→        </div>
+   567→      </div>
+   568→    </section>
+   569→  );
+   570→}
+   571→
+   572→// ============================================================
+   573→// Specialist CTA (quote)
+   574→// ============================================================
+   575→function SpecialistCta() {
+   576→  const openSpecialistLogin = useHomeFix((s) => s.openSpecialistLogin);
+   577→  return (
+   578→    <section aria-label="دعوت متخصص‌ها" className={`${CONTAINER} py-12 md:py-16`}>
+   579→      <div className={`${CARD} relative mx-auto max-w-3xl p-8 text-center`}>
+   580→        <Quote className="mx-auto mb-4 size-8 text-accent" aria-hidden />
+   581→        <p className="mx-auto max-w-xl text-lg leading-relaxed font-semibold md:text-xl">
+   582→          ما برای متخصص‌ها مشتری آماده می‌آوریم؛ ثبت‌نام اولیه رایگانه و فقط از هر کاری که از طریق
+   583→          ما بگیری، درصد کمی کمیسیون می‌دی.
+   584→        </p>
+   585→        <p className="mt-3 text-sm text-muted-foreground">— تیم HomeFix</p>
+   586→        <Button size="lg" className="mt-6 min-h-11 px-6" onClick={() => openSpecialistLogin("register")}>
+   587→          <UserRoundPlus className="size-5" />
+   588→          ثبت‌نام متخصص
+   589→        </Button>
+   590→      </div>
+   591→    </section>
+   592→  );
+   593→}
+   594→
+   595→// ============================================================
+   596→// Top specialists — from stats.topSpecialists
+   597→// ============================================================
+   598→function TopSpecialists() {
+   599→  const openBooking = useHomeFix((s) => s.openBooking);
+   600→  const { data, isLoading, isError, refetch } = useQuery({
+   601→    queryKey: ["stats"],
+   602→    queryFn: () => apiGet<{ stats: StatsDTO }>("/api/stats"),
+   603→    retry: 1,
+   604→  });
+   605→
+   606→  if (isLoading) return <SpinnerRow label="در حال بارگذاری متخصص‌های برتر…" />;
+   607→  if (isError) return <ErrorState onRetry={() => refetch()} />;
+   608→
+   609→  const top = data?.stats.topSpecialists ?? [];
+   610→  if (top.length === 0) return null;
+   611→
+   612→  return (
+   613→    <div className={`${CONTAINER} pb-12 md:pb-16`}>
+   614→      <SectionHeading
+   615→        eyebrow="متخصص‌های برتر"
+   616→        title="حرفه‌ای‌های HomeFix"
+   617→        sub="بهترین امتیازها، بیشترین سفارش موفق."
+   618→      />
+   619→      <motion.div
+   620→        variants={staggerContainer}
+   621→        initial="hidden"
+   622→        whileInView="show"
+   623→        viewport={{ once: true, margin: "-40px" }}
+   624→        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+   625→      >
+   626→        {top.map((sp) => (
+   627→          <motion.div key={sp.id} variants={staggerItem} className={`${CARD} flex flex-col p-5`}>
+   628→            <div className="flex items-center gap-3">
+   629→              <span className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-bl from-emerald-500 to-teal-700 text-lg font-extrabold text-white">
+   630→                {initialsAvatar(`${sp.firstName} ${sp.lastName}`)}
+   631→              </span>
+   632→              <div className="min-w-0">
+   633→                <p className="truncate font-bold">
+   634→                  {sp.firstName} {sp.lastName}
+   635→                </p>
+   636→                <p className="truncate text-xs text-muted-foreground">{sp.skills[0]}</p>
+   637→              </div>
+   638→            </div>
+   639→            <StarRating value={sp.rating} count={sp.ratingCount} size={14} className="mt-3" />
+   640→            <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+   641→              <ShieldCheck className="size-3.5 text-primary" />
+   642→              {toFa(sp.successfulOrders)} سفارش موفق
+   643→            </p>
+   644→            <div className="mt-3 flex items-center justify-between gap-2">
+   645→              <LevelBadge level={sp.verificationLevel} />
+   646→              <Button variant="outline" size="sm" className="min-h-9" onClick={() => openBooking()}>
+   647→                رزرو
+   648→              </Button>
+   649→            </div>
+   650→          </motion.div>
+   651→        ))}
+   652→      </motion.div>
+   653→    </div>
+   654→  );
+   655→}
+   656→
+   657→// ============================================================
+   658→// HomeView
+   659→// ============================================================
+   660→export function HomeView() {
+   661→  return (
+   662→    <div>
+   663→      <Hero />
+   664→      <StatsStrip />
+   665→      <AiAssistant />
+   666→      <CatalogGrid />
+   667→      <HowItWorks />
+   668→      <TrustSection />
+   669→      <PlansSection />
+   670→      <SpecialistCta />
+   671→      <section aria-label="متخصص‌های برتر" className="bg-muted/40">
+   672→        <div className="py-12 md:py-16">
+   673→          <TopSpecialists />
+   674→        </div>
+   675→      </section>
+   676→    </div>
+   677→  );
+   678→}
+   679→

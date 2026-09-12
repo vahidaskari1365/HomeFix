@@ -1,17 +1,19 @@
 "use client";
 
 // ============================================================
-// HomeFix — small shared UI parts
+// HomeFix — small shared UI parts (custom design language)
+// طاق ایرانی + ریتم بصری «خانه و اعتماد»
 // ============================================================
 
-import { motion, type Variants } from "framer-motion";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
-  Check,
-  Loader2,
-  RotateCcw,
-  Star,
-} from "lucide-react";
-import { useSyncExternalStore } from "react";
+  animate,
+  motion,
+  useInView,
+  useReducedMotion,
+  type Variants,
+} from "framer-motion";
+import { Check, Loader2, RotateCcw, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toFa } from "@/lib/format";
 import {
@@ -23,13 +25,115 @@ import {
 // ---------- motion presets ----------
 export const staggerContainer: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
+  show: { transition: { staggerChildren: 0.07 } },
 };
 
 export const staggerItem: Variants = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+  hidden: { opacity: 0, y: 18 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+  },
 };
+
+// ---------- scroll reveal wrapper ----------
+export function Reveal({
+  children,
+  delay = 0,
+  y = 22,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  y?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  if (reduce) return <div className={className}>{children}</div>;
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-48px" }}
+      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ---------- animated number counter ----------
+export function Counter({
+  value,
+  decimals = 0,
+  duration = 1.6,
+  className,
+}: {
+  value: number;
+  decimals?: number;
+  duration?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const reduce = useReducedMotion();
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const controls = animate(0, value, {
+      duration: reduce ? 0 : duration,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => setDisplay(v),
+    });
+    return () => controls.stop();
+  }, [inView, value, duration, reduce]);
+
+  return (
+    <span ref={ref} className={className}>
+      {toFa(display.toFixed(decimals))}
+    </span>
+  );
+}
+
+// ---------- ornamental divider (rosette + rules) ----------
+export function OrnamentDivider({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex items-center justify-center gap-3", className)} aria-hidden>
+      <span className="h-px w-14 bg-gradient-to-l from-primary/35 to-transparent" />
+      <svg viewBox="0 0 24 24" className="size-4 text-brass" fill="currentColor">
+        <path d="M12 1.5 14.6 9.4 22.5 12 14.6 14.6 12 22.5 9.4 14.6 1.5 12 9.4 9.4Z" />
+      </svg>
+      <span className="h-px w-14 bg-gradient-to-r from-primary/35 to-transparent" />
+    </div>
+  );
+}
+
+// ---------- animated hand-drawn underline ----------
+export function Squiggle({ className }: { className?: string }) {
+  const reduce = useReducedMotion();
+  return (
+    <svg
+      viewBox="0 0 220 14"
+      fill="none"
+      aria-hidden
+      className={cn("absolute -bottom-2 right-0 h-3 w-full", className)}
+      preserveAspectRatio="none"
+    >
+      <motion.path
+        d="M4 10 C 40 2, 70 12, 108 7 S 180 3, 216 8"
+        stroke="var(--brass)"
+        strokeWidth="5"
+        strokeLinecap="round"
+        initial={reduce ? { pathLength: 1 } : { pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.9, delay: 0.7, ease: "easeOut" }}
+      />
+    </svg>
+  );
+}
 
 // ---------- section heading ----------
 export function SectionHeading({
@@ -37,32 +141,57 @@ export function SectionHeading({
   title,
   sub,
   center,
+  dark,
 }: {
   eyebrow?: string;
   title: string;
   sub?: string;
   center?: boolean;
+  dark?: boolean;
 }) {
   return (
-    <div className={cn("mb-8 space-y-2", center && "text-center")}>
+    <Reveal className={cn("mb-10 space-y-3", center && "text-center")}>
       {eyebrow ? (
-        <span className="inline-block rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
+        <span
+          className={cn(
+            "inline-flex items-center gap-2 text-xs font-extrabold tracking-widest",
+            dark ? "text-brass" : "text-brass-deep dark:text-brass"
+          )}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-brass shadow-[0_0_0_3px] shadow-brass/20" aria-hidden />
           {eyebrow}
         </span>
       ) : null}
-      <h2 className="text-2xl font-extrabold md:text-3xl">{title}</h2>
-      {sub ? <p className="max-w-2xl text-muted-foreground">{sub}</p> : null}
-    </div>
+      <h2
+        className={cn(
+          "text-2xl font-black leading-snug md:text-4xl md:leading-snug",
+          dark ? "text-deep-foreground" : "text-foreground"
+        )}
+      >
+        {title}
+      </h2>
+      {sub ? (
+        <p
+          className={cn(
+            "max-w-2xl text-sm leading-relaxed md:text-base",
+            dark ? "text-deep-foreground/70" : "text-muted-foreground",
+            center && "mx-auto"
+          )}
+        >
+          {sub}
+        </p>
+      ) : null}
+    </Reveal>
   );
 }
 
 // ---------- status badge ----------
 const STATUS_STYLES: Record<OrderStatus, string> = {
   FINDING: "bg-muted text-muted-foreground border-border",
-  OFFERED: "bg-accent/15 text-accent-foreground border-accent/40",
+  OFFERED: "bg-brass/15 text-brass-deep dark:text-brass border-brass/40",
   ACCEPTED: "bg-primary/10 text-primary border-primary/30",
-  ARRIVED: "bg-teal-600/10 text-teal-700 border-teal-600/30 dark:text-teal-300",
-  IN_PROGRESS: "bg-accent/15 text-accent-foreground border-accent/40",
+  ARRIVED: "bg-terra/10 text-terra border-terra/30",
+  IN_PROGRESS: "bg-brass/15 text-brass-deep dark:text-brass border-brass/40",
   COMPLETED: "bg-primary/10 text-primary border-primary/30",
   PAID: "bg-primary text-primary-foreground border-primary",
   CANCELED: "bg-destructive/10 text-destructive border-destructive/30",
@@ -95,7 +224,7 @@ export type Level = 1 | 2 | 3;
 export function LevelBadge({ level }: { level: Level }) {
   const meta = LEVEL_META[level];
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+    <span className="inline-flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-[11px] font-semibold text-muted-foreground shadow-warm-sm">
       <span className={cn("size-2 rounded-full", meta.dot)} aria-hidden />
       {meta.label}
     </span>
@@ -138,7 +267,7 @@ export function StarRating({
           <Star
             style={{ width: size, height: size }}
             className={cn(
-              active ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40",
+              active ? "fill-brass text-brass" : "text-muted-foreground/35",
               interactive && "transition-transform hover:scale-110"
             )}
           />
@@ -177,8 +306,8 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card/50 px-6 py-12 text-center">
-      <div className="grid size-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card/60 px-6 py-12 text-center shadow-warm-sm">
+      <div className="arch-well grid size-14 place-items-center bg-muted text-muted-foreground">
         {icon}
       </div>
       <p className="font-bold">{title}</p>
@@ -216,8 +345,8 @@ export function LoadingCards({ count = 4, className }: { count?: number; classNa
   return (
     <div className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-4", className)}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border bg-card p-5 shadow-sm">
-          <div className="mb-4 size-12 animate-pulse rounded-xl bg-muted" />
+        <div key={i} className="rounded-2xl border bg-card p-5 shadow-warm-sm">
+          <div className="arch-well mb-4 size-12 animate-pulse bg-muted" />
           <div className="mb-2 h-4 w-2/3 animate-pulse rounded bg-muted" />
           <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
         </div>

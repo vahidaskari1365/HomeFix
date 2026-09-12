@@ -92,11 +92,12 @@ function BootSkeleton() {
       <main className="flex flex-1 items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <motion.span
-            className="grid size-16 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg"
+            className="arch-well relative grid size-16 place-items-center overflow-hidden bg-primary text-primary-foreground shadow-glow-teal"
             animate={{ scale: [1, 1.08, 1] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
           >
-            <Wrench className="size-8" />
+            <span className="pattern-khatam-light absolute inset-0 opacity-60" aria-hidden />
+            <Wrench className="relative size-8" />
           </motion.span>
           <p className="text-sm font-bold text-muted-foreground">HomeFix در حال آماده‌سازی…</p>
         </div>
